@@ -35,7 +35,7 @@ class Query(BaseModel):
 @app.post("/ask")
 async def ask_agent(query: Query):
     try:
-        response = customer_support_agent(query.question)
+        response = await customer_support_agent.achat(query.question)
         return {"response": response}
     except Exception as e:
         print("🔥 Exception occurred:", str(e))
