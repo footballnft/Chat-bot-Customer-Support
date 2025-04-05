@@ -3,6 +3,7 @@ from pydantic import BaseModel
 from agno.agent import Agent
 from agno.models.groq import Groq
 from fastapi.middleware.cors import CORSMiddleware
+import traceback  # Add this at the top
 
 app = FastAPI()
 
@@ -37,6 +38,8 @@ async def ask_agent(query: Query):
         response = customer_support_agent(query.question)
         return {"response": response}
     except Exception as e:
+        print("🔥 Exception occurred:", str(e))
+        traceback.print_exc()  # This will print full error in Render logs
         raise HTTPException(status_code=500, detail=str(e))
 
 
