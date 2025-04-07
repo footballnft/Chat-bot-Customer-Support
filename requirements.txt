@@ -3,3 +3,4 @@ uvicorn
 agno
 groq
 pydantic
+websockets
