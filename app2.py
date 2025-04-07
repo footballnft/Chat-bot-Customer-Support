@@ -80,28 +80,33 @@ async def preflight_handler():
 @app.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket):
     await websocket.accept()
-    session_id = id(websocket)
-    user_sessions[session_id] = []
+    session_id = id(websocket)  # Unique session ID
+    user_sessions[session_id] = []  # Store chat history
 
     while True:
         try:
             question = await websocket.receive_text()
             print(f"👤 User: {question}")
 
-            # Append question to history
-            user_sessions[session_id].append({"role": "user", "content": question})
+            # Append question to history with proper format
+            user_sessions[session_id].append({"role": "user", "content": str(question)})
 
-            # Pass chat history to AI
-            response = customer_support_agent.run(user_sessions[session_id])
+            # Pass chat history to AI - ensure each message has proper format
+            formatted_messages = [
+                {"role": msg["role"], "content": str(msg["content"])}
+                for msg in user_sessions[session_id]
+            ]
+
+            response = customer_support_agent.run(formatted_messages)
 
             response_text = getattr(response, 'content',
-                            getattr(response, 'text',
-                            getattr(response, 'response', str(response))))
+                                getattr(response, 'text',
+                                getattr(response, 'response', str(response))))
 
-            user_sessions[session_id].append({"role": "assistant", "content": response_text})
+             # Append response to history
+            user_sessions[session_id].append({"role": "assistant", "content": str(response_text)})
             print(f"🤖 AI: {response_text}")
 
-            # Append response to history
             await websocket.send_text(response_text.strip())
 
         except Exception as e:
