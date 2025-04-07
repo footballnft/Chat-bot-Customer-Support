@@ -88,7 +88,10 @@ async def websocket_endpoint(websocket: WebSocket):
             question = await websocket.receive_text()
             print(f"👤 User: {question}")
 
+            # Append question to history
             user_sessions[session_id].append({"role": "user", "content": question})
+
+            # Pass chat history to AI
             response = customer_support_agent.run(user_sessions[session_id])
 
             response_text = getattr(response, 'content',
@@ -98,6 +101,7 @@ async def websocket_endpoint(websocket: WebSocket):
             user_sessions[session_id].append({"role": "assistant", "content": response_text})
             print(f"🤖 AI: {response_text}")
 
+            # Append response to history
             await websocket.send_text(response_text.strip())
 
         except Exception as e:
