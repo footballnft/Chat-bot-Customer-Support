@@ -4,7 +4,7 @@ from agno.agent import Agent
 from agno.models.groq import Groq
 from agno.utils.pprint import pprint_run_response
 from fastapi.middleware.cors import CORSMiddleware
-import traceback  # Add this at the top
+import traceback
 import json
 
 app = FastAPI()
@@ -15,11 +15,11 @@ app.add_middleware(
     allow_origins=[
         "https://pennyfundme5-neon.vercel.app",
         "http://localhost:3000",  # For local testing
-    ],  # Change this to your frontend URL in production
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
-    expose_headers=["*"]  # Expose all headers to the client
+    expose_headers=["*"]
 )
 
 # Define AI agent
@@ -45,18 +45,12 @@ class Query(BaseModel):
 @app.post("/ask")
 async def ask_agent(query: Query):
     try:
-        # Get the RunResponse object
         response = customer_support_agent.run(query.question)
 
-        # Extract the text content from the response
-        # According to Agno docs, RunResponse should have the actual response content
-        # Try multiple possible response attributes
         response_text = getattr(response, 'content',
-                      getattr(response, 'text',
-                      getattr(response, 'response', str(response))))
+                        getattr(response, 'text',
+                        getattr(response, 'response', str(response))))
 
-
-    # If the above doesn't work, try the pretty print function's output
         if not response_text:
             import io
             from contextlib import redirect_stdout
@@ -81,10 +75,9 @@ async def preflight_handler():
 @app.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket):
     await websocket.accept()
-    session_id = id(websocket)  # Unique session ID
-    user_sessions[session_id] = []  # Store chat history
+    session_id = id(websocket)
+    user_sessions[session_id] = []
 
-    # Add initial system message if needed
     if not user_sessions[session_id]:
         user_sessions[session_id].append({
             "role": "system",
@@ -96,10 +89,9 @@ async def websocket_endpoint(websocket: WebSocket):
             question = await websocket.receive_text()
             print(f"👤 User: {question}")
 
-            # Append question to history with proper format
             user_sessions[session_id].append({
                 "role": "user",
-                "content": str(question)  # Ensure content is string
+                "content": str(question)
             })
 
             # Validate and sanitize all messages
@@ -120,21 +112,17 @@ async def websocket_endpoint(websocket: WebSocket):
             # Run agent with sanitized messages
             response = customer_support_agent.run(messages)
 
-            # Get response text
             response_text = getattr(response, 'content',
                                 getattr(response, 'text',
                                 getattr(response, 'response', str(response))))
-
-            # Ensure response is string before storing
             response_text = str(response_text)
 
-            # Append response to history
             user_sessions[session_id].append({
                 "role": "assistant",
                 "content": response_text
             })
-            print(f"🤖 AI: {response_text}")
 
+            print(f"🤖 AI: {response_text}")
             await websocket.send_text(response_text.strip())
 
         except Exception as e:
@@ -142,8 +130,7 @@ async def websocket_endpoint(websocket: WebSocket):
             traceback.print_exc()
             await websocket.send_text("⚠️ An error occurred. Please try again later.")
             break
+
 @app.get("/")
 async def root():
     return {"message": "Welcome to the Crypto Support Agent API!"}
-
-
