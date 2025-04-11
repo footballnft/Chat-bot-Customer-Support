@@ -10,7 +10,7 @@ from fastapi.responses import JSONResponse
 from slowapi import Limiter
 from slowapi.util import get_remote_address
 from slowapi.errors import RateLimitExceeded
-import traceback   # Add this at the top
+import traceback
 import json
 import time
 from typing import Dict, List
@@ -109,20 +109,13 @@ async def ask_agent(request: Request, query: Query):
             raise HTTPException(status_code=429, detail="Too many requests")
 
         response = customer_support_agent.run(query.question)
-
-        # Extract the text content from the response
-        # According to Agno docs, RunResponse should have the actual response content
-        # Try multiple possible response attributes
         response_text = getattr(response, 'content',
                       getattr(response, 'text',
                       getattr(response, 'response', str(response))))
 
-
-    # If the above doesn't work, try the pretty print function's output
         if not response_text:
             import io
             from contextlib import redirect_stdout
-
             f = io.StringIO()
             with redirect_stdout(f):
                 pprint_run_response(response, markdown=True)
@@ -157,22 +150,17 @@ async def websocket_endpoint(websocket: WebSocket):
             question = await websocket.receive_text()
             print(f"👤 User {session_id}: {question}")
 
-            # Append question to history with proper format
+            # Append question to history
             manager.user_sessions[session_id].append({
                 "role": "user",
-                "content": str(question)  # Ensure content is string
+                "content": str(question)
             })
 
             # Process message
-            # Run agent with just the latest question (as string)
             response = customer_support_agent.run(question)
-
-            # Get response text
             response_text = getattr(response, 'content',
                                 getattr(response, 'text',
                                 getattr(response, 'response', str(response))))
-
-            # Ensure response is string before storing
             response_text = str(response_text)
 
             # Append response to history

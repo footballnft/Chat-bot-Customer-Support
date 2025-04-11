@@ -4,3 +4,6 @@ agno
 groq
 pydantic
 websockets
+slowapi
+python-multipart
+python-dotenv
